@@ -49,13 +49,15 @@ public class MainActivity extends AppCompatActivity {
             ContentResolver contentResolver = getContentResolver();
             Cursor smsInboxCursor = contentResolver.query(Uri.parse("content://sms/inbox"), null, null, null, null);
             int indexBody = smsInboxCursor.getColumnIndex("body");
+            int indexID = smsInboxCursor.getColumnIndex("_id");
             int indexAddress = smsInboxCursor.getColumnIndex("address");
             int indexDate = smsInboxCursor.getColumnIndex("date");
             if (indexBody < 0 || !smsInboxCursor.moveToFirst()) return;
             do {
                 String str = "SMS From: " + smsInboxCursor.getString(indexAddress) +
-                        "\n" + smsInboxCursor.getString(indexBody) + "\n";
-                postNewComment(context, smsInboxCursor.getString(indexAddress), smsInboxCursor.getLong(indexDate));
+                        "\n" + smsInboxCursor.getString(indexBody) + "\n" + smsInboxCursor.getString(indexID);
+                postNewComment(context, smsInboxCursor.getString(indexAddress), smsInboxCursor.getLong(indexDate), smsInboxCursor.getString(indexID));
+                System.out.println(str);
             } while (smsInboxCursor.moveToNext());
         }
         else{
@@ -63,12 +65,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public static void postNewComment(Context context, final String address, final Long dateSend){
+    public static void postNewComment(Context context, final String address, final Long dateSend, final String id){
         RequestQueue queue = Volley.newRequestQueue(context);
 //        StringRequest sr = new StringRequest(Request.Method.POST,"https://smamgg.bixly.com/incomingPOSTAndroid", new Response.Listener<String>() {
         //RequestQueue queue = Volley.newRequestQueue(context); 
 //        String url = "https://smamgg.bixly.com/incomingPOSTAndroid";
-        String url = "https://shoppinglist.bixly.com/incomingPOSTAndroid";
+        String url = "http://textapp2.us-west-2.elasticbeanstalk.com/incomingPOSTAndroid";
 
         StringRequest postRequest = new StringRequest(Request.Method.POST, url,
                 new Response.Listener<String>()
@@ -76,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(String response) {
                         // response
+                        System.out.println("Response = " + response);
                         Log.d("Response", response);
                     }
                 },
@@ -103,56 +106,17 @@ public class MainActivity extends AppCompatActivity {
             {
                 String addr = address;
                 Long date = dateSend;
+                String idParam = id;
                 Map<String, String>  params = new HashMap<String, String>();
                 params.put("addr", addr);
                 params.put("date", String.valueOf(date));
+                params.put("id", idParam);
 
                 return params;
             }
         };
         queue.add(postRequest);
 
-////        mPostCommentResponse.requestStarted();
-//        RequestQueue queue = Volley.newRequestQueue(context);
-//        StringRequest sr = new StringRequest(Request.Method.POST,"https://smamgg.bixly.com/incomingPOSTAndroid", new Response.Listener<String>() {
-//            @Override
-//            public void onResponse(String response) {
-////                mPostCommentResponse.requestCompleted();
-//                System.out.println("success" + response);
-//            }
-//        }, new Response.ErrorListener() {
-//            @Override
-//            public void onErrorResponse(VolleyError error) {
-//                String body = "Empty Body";
-//                //get status code here
-//                String statusCode = String.valueOf(error.networkResponse.statusCode);
-//                //get response body and parse with appropriate encoding
-//                if(error.networkResponse.data!=null) {
-//                    try {
-//                        body = new String(error.networkResponse.data,"UTF-8");
-//                    } catch (UnsupportedEncodingException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//                System.out.println("failure " + body);
-//            }
-//        }){
-//            @Override
-//            protected Map<String,String> getParams(){
-//                Map<String,String> params = new HashMap<String, String>();
-//                params.put("user","user");
-//                params.put("pass","pass");
-//                return params;
-//            }
-//
-//            @Override
-//            public Map<String, String> getHeaders() throws AuthFailureError {
-//                Map<String,String> params = new HashMap<String, String>();
-//                params.put("Content-Type","application/x-www-form-urlencoded");
-//                return params;
-//            }
-//        };
-//        queue.add(sr);
     }
 
     public interface PostCommentResponseListener {
